@@ -1,69 +1,73 @@
 $(function() {
-	var map, oldZoom, stats = {};
-	
-	var parties = ['Green', 'Bloc'];
+	// Enable new cartography and themes
+	google.maps.visualRefresh = true;
 
-	$.each(parties, function(i, party) {
+	// Create map centred on Canada
+	var mapOptions = {
+		center: new google.maps.LatLng(53, -95),
+		zoom: 4,
+		mapTypeId: google.maps.MapTypeId.ROADMAP
+	};
+	var map = new google.maps.Map(document.getElementById('mapDiv'), mapOptions);
+	var oldZoom = map.getZoom();
+	var circles = [];
+
+	// Resize circles when zoom changed
+	google.maps.event.addListener(map, 'zoom_changed', function(e) {
+		var newZoom = map.getZoom();
+		$.each(circles, function(i, circle) {
+			circle.setRadius((circle.getRadius() * oldZoom) / newZoom);
+		})
+		oldZoom = newZoom;
+	});
+
+	// Load postal code data for each party and draw the first one
+	var parties = {
+		'Green': ['Green Party', 'green'],
+		'Bloc': ['Bloc Quebecois', 'blue']
+	};
+	var stats = {};
+	
+	$.each(Object.keys(parties).sort(), function(i, party) {
 		$.ajax('./totals/' + party + '.json', {
-			complete : function(xhr, status) {
+			complete: function(xhr, status) {
 				stats[party] = xhr.responseJSON;
-				if (i == 0) initMap(party);
+				if (i == 0)
+					draw_circles(party);
+
+				// Create a link for each party
+				$('<a data-party="' + party + '">' + parties[party][0] + '</a>')
+						.appendTo('#partyList').click(function(e) {
+					e.preventDefault();
+					draw_circles($(this).attr('data-party'));
+				});
 			}
 		});
 	});
 
-	function initMap(party) {
+	function draw_circles(party) {
 		var pstats = stats[party];
-		
-		// Enabling new cartography and themes
-		google.maps.visualRefresh = true;
+		var colour = parties[party][1];
 
-		// Setting starting option of map to Canada
-		var mapOptions = {
-			center : new google.maps.LatLng(53, -95),
-			zoom : 4,
-			mapTypeId : google.maps.MapTypeId.ROADMAP
-		};
+		// Clear existing circles
+		$.each(circles, function(i, circle) {
+			circle.setMap(null);
+		})
 
-		// Getting map DOM element
-		var mapElement = document.getElementById('mapDiv');
-
-		// Creating a map with DOM element which is just //obtained
-		map = new google.maps.Map(mapElement, mapOptions);
-		oldZoom = map.getZoom();
-
-		// First, create an object containing LatLng and population for each
-		// city.
-		var postalCodes = {};
-		var circles = [];
-
+		// Add a circle to the map for each postal code.
 		for (var i = 0; i < pstats.length; i++) {
 			var circleOptions = {
-				strokeColor : 'purple',
-				strokeOpacity : 1,
-				strokeWeight : 1,
-				fillColor : 'yellow',
-				//fillOpacity : Number(stats[i]['Amount']) / 5000,
+				strokeColor: colour,
+				strokeOpacity: 1,
+				strokeWeight: 1,
+				fillColor: colour,
 				fillOpacity: .25,
-				map : map,
-				center : new google.maps.LatLng(
-						Number(pstats[i]['Lat']), Number(pstats[i]['Lng'])),
-				radius : Number(pstats[i]['Amount']) * 50 / oldZoom
+				map: map,
+				center: new google.maps.LatLng(Number(pstats[i]['Lat']),
+						Number(pstats[i]['Lng'])),
+				radius: Number(pstats[i]['Amount']) * 50 / oldZoom
 			};
-			// Add the circle for this city to the map.
-			postalCode = new google.maps.Circle(circleOptions);
-			circles.push(postalCode);
+			circles.push(new google.maps.Circle(circleOptions));
 		}
-
-		google.maps.event.addListener(map, 'zoom_changed', function(e) {
-			var newZoom = map.getZoom();
-			for (var i = 0; i < circles.length; i++) {
-				console.log(circles[i].getRadius());
-				circles[i].setRadius((circles[i].getRadius() * oldZoom)
-						/ newZoom);
-				console.log(circles[i].getRadius());
-			}
-			oldZoom = newZoom;
-		});
 	}
 });

@@ -1,0 +1,4 @@
+#mapDiv { width: 100%; height: 600px; margin: auto; }
+
+#partyList { text-align: center; }
+#partyList a { display: inline-block; margin: 10px; cursor: pointer; }
