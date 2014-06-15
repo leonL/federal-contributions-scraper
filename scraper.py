@@ -8,7 +8,7 @@ FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/DetailedReport'
 RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/DetailedReport'
 
 
-def scrape(session, queryid, federal=True, get_address=True, year=2012):
+def scrape(session, queryid, federal=True, year=2012, get_address=True):
     base_uri = FEDERAL_URI if federal else RIDING_URI
 
     params = {'act': 'C2',
@@ -40,12 +40,12 @@ def scrape(session, queryid, federal=True, get_address=True, year=2012):
         params['selectedid'] = option['value']
         subcat = option.get_text().split(' /', 1)[0]
 
-        print 'Search {0} of {1}:'.format(o + 1, len(options)), subcat.encode('utf8')
+        print 'Search {} of {}:'.format(o + 1, len(options)), subcat.encode('utf8')
         subcat_contribs = subcat_search(session, base_uri, params, get_address)
         contribs.extend([(subcat,) + result for result in subcat_contribs])
 
     total_time = time.time() - start_time
-    print 'Total time: {0} minute(s) {1} second(s)'.format(total_time / 60, total_time % 60)
+    print 'Total time: {} minute(s) {} second(s)'.format(int(total_time / 60), int(total_time % 60))
 
     return contribs
 
