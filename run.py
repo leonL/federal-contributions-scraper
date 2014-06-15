@@ -1,14 +1,20 @@
+import requests
+
 import parser
+import query
 import scraper
 
 
-queryid = '289c7d6912724a42b9c4e63462d224bb'
-sessionid = 'ppbz0qkvoa3hh3ez0k4ywayq'
 federal = True
 get_address = True
 year = 2012
+party = None
 
-contribs = scraper.scrape(queryid, sessionid, federal, get_address)
+session = requests.Session()
+
+queryid = query.start_query(session, party, federal)
+
+contribs = scraper.scrape(session, queryid, federal, get_address)
 for i in contribs:
     print i
 

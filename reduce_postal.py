@@ -5,7 +5,7 @@ current_pcode, lats, longs = None, None, None
 
 print 'Reading codes...'
 # Data procured from http://geocoder.ca/onetimedownload/Canada.csv.gz
-with open('Canadian Postal Codes Points.csv', 'rb') as csvfile:
+with open('postal code points.csv', 'rb') as csvfile:
     reader = csv.reader(csvfile)
     for pcode, plat, plong, city, province in reader:
         plat = float(plat)
@@ -22,7 +22,7 @@ with open('Canadian Postal Codes Points.csv', 'rb') as csvfile:
 
 print 'Writing codes...'
 with open('postal code groups.csv', 'wb') as csvout:
-    writer = csv.writer(csvout)
+    writer = csv.writer(csvout, lineterminator='\n')
     for line in codes:
         writer.writerow(line)
 
