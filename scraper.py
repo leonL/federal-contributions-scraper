@@ -2,6 +2,7 @@ import re
 import time
 
 from bs4 import BeautifulSoup
+import grequests
 
 
 FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/DetailedReport'
@@ -10,7 +11,6 @@ RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/DetailedReport'
 
 def scrape(session, queryid, federal=True, year=2012, get_address=True):
     base_uri = FEDERAL_URI if federal else RIDING_URI
-
     params = {'act': 'C2',
               'returntype': 1,
               'option': 2,
@@ -40,6 +40,7 @@ def scrape(session, queryid, federal=True, year=2012, get_address=True):
         params['selectedid'] = option['value']
         subcat = option.get_text().split(' /', 1)[0]
 
+        print
         print 'Search {} of {}:'.format(o + 1, len(options)), subcat.encode('utf8')
         subcat_contribs = subcat_search(session, base_uri, params, get_address)
         contribs.extend([(subcat,) + result for result in subcat_contribs])
@@ -55,6 +56,7 @@ def subcat_search(session, base_uri, params, get_address=True):
 
     page = 1
     pages = 1
+    postal_params = params.copy()
     while page <= pages:
         print 'Reading page', ('1...' if pages == 1 else '{0} of {1}...'.format(page, pages)),
 
@@ -68,7 +70,7 @@ def subcat_search(session, base_uri, params, get_address=True):
             if nextlink:
                 m = re.search('totalpages=(\d+)', nextlink['href'])
                 pages = int(m.group(1))
-                print pages, 'page(s) found.'.format(pages),
+                print pages, 'page(s) found.'.format(pages)
         page += 1
 
         table = soup.find('table', class_='DataTable')
@@ -79,9 +81,9 @@ def subcat_search(session, base_uri, params, get_address=True):
 
             raise Exception('Error: no table on page. Try a new query ID.')
 
+        page_contribs = []
         rows = table.find('tbody').find_all('tr', recursive=False)
-        print 'Reading {} result(s)...'.format(len(rows))
-
+        print '{} result(s).'.format(len(rows))
         for row in rows:
             cells = row.find_all('td')
 
@@ -94,34 +96,35 @@ def subcat_search(session, base_uri, params, get_address=True):
                 if ch in num:
                     num = num.split(ch, 1)[0]
 
+            page_contribs.append((int(num), # number
+                                  cells[1].get_text().strip(), # full name
+                                  cells[2].get_text().strip(), # date
+                                  float(cells[5].get_text().replace(',', '')), # total amount
+                                  '', '', ''))
 
-            name = cells[1].get_text().strip()
+        if get_address:
+            print 'Fetching addresses...'
+            greqs = []
+            for contrib in page_contribs:
+                postal_params.update({'addrname': contrib[1],
+                                      'addrclientid': params['selectedid'],
+                                      'displayaddress': True,
+                                      'page': page,
+                                      })
+                greqs.append(grequests.get(base_uri, params=postal_params, session=session))
+            gresps = grequests.map(greqs)
 
-            city, province, postal = (get_postal_codes(session, base_uri, params, name)
-                                      if get_address else ('', '', ''))
+            print 'Reading addresses...'
+            for i, req in enumerate(gresps):
+                soup = BeautifulSoup(req.text)
 
-            contribs.append((int(num), # number
-                             name, # full name
-                             cells[2].get_text().strip(), # date
-                             float(cells[5].get_text().replace(',', '')), # total amount
-                             city,
-                             province,
-                             postal
-                             ))
+                addrinfo = soup.find(id='addressinfo')
+                city = addrinfo.find('input', id='city')['value']
+                province = addrinfo.find('input', id='province')['value']
+                postal = addrinfo.find('input', id='postalcode')['value'].upper().replace(' ', '')
+
+                page_contribs[i] = page_contribs[i][:4] + (city, province, postal)
+
+        contribs.extend(page_contribs)
 
     return contribs
-
-
-def get_postal_codes(session, base_uri, params, name):
-    params.update({'addrname': name,
-                   'addrclientid': params['selectedid'],
-                   'displayaddress': True,
-                   })
-    req = session.get(base_uri, params=params)
-    soup = BeautifulSoup(req.text)
-
-    city = soup.find('input', id='city')['value']
-    province = soup.find('input', id='province')['value']
-    postal = soup.find('input', id='postalcode')['value'].upper().replace(' ', '')
-
-    return city, province, postal

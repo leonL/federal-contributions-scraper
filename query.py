@@ -9,7 +9,6 @@ RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/SelectAssociations'
 
 def start_query(session, party=None, federal=True, year=2012):
     base_uri = FEDERAL_URI if federal else RIDING_URI
-
     params = {
         'act': 'C2',
         'returntype': 1,
@@ -36,8 +35,8 @@ def start_query(session, party=None, federal=True, year=2012):
         'AddParties': 'Find',
         } if federal else {
         'AddAssociations': 'Find Association(s)',
-        'district': -1,
-        'province': -1,
+        'district':-1,
+        'province':-1,
         })
 
     # get search options for selected party
@@ -58,8 +57,8 @@ def start_query(session, party=None, federal=True, year=2012):
         'partiesSelectedIds': [opt.get('value') for opt in options],
         } if federal else {
         'selectedids': [opt.get('value') for opt in options],
-        'district': -1,
-        'province': -1,
+        'district':-1,
+        'province':-1,
         })
 
     print 'Found {} returns.'.format(len(options))
