@@ -61,7 +61,7 @@ def start_query(session, party=None, federal=True, year=2012):
         'province':-1,
         })
 
-    print 'Found {} returns.'.format(len(options))
+    print 'Found {} return(s).'.format(len(options))
 
     # search for selected returns
     req = session.post(base_uri, params=params, data=postdata)
