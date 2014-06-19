@@ -1,3 +1,4 @@
+import csv
 import re
 import time
 
@@ -6,9 +7,10 @@ from bs4 import BeautifulSoup, SoupStrainer
 
 FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/DetailedReport'
 RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/DetailedReport'
+PAGE_SIZE = 200
 
 
-def scrape(session, queryid, federal=True, year=2012, get_address=True):
+def scrape(session, queryid, federal=True, year=2012, get_address=True, csvpath=None):
     base_uri = FEDERAL_URI if federal else RIDING_URI
     params = {'act': 'C2',
               'returntype': 1,
@@ -36,12 +38,25 @@ def scrape(session, queryid, federal=True, year=2012, get_address=True):
     options = select.find_all('option')
     for o, option in enumerate(options):
         params['selectedid'] = option['value']
-        subcat = option.get_text().split(' /', 1)[0]
+        subcat = option.get_text().split(' /', 1)[0].encode('utf-8')
 
         print
-        print 'Search {} of {}:'.format(o + 1, len(options)), subcat.encode('utf8')
-        subcat_contribs = subcat_search(session, base_uri, params, get_address)
-        contribs.extend([(subcat,) + result for result in subcat_contribs])
+        print 'Search {} of {}:'.format(o + 1, len(options)), subcat
+
+        try:
+            with open(csvpath, 'rb') as csvfile:
+                count = len([contrib for contrib in csv.reader(csvfile) if contrib[0] == subcat])
+        except IOError:
+            count = 0
+
+        if csvpath:
+            with open(csvpath, 'a+b', 1) as csvfile:
+                print 'Opening CSV file for writing.'
+                csvwriter = csv.writer(csvfile, lineterminator='\n')
+                contribs.extend(subcat_search(subcat, session, base_uri, params, get_address,
+                                                csvwriter, count))
+        else:
+            contribs.extend(subcat_search(subcat, session, base_uri, params, get_address))
 
     total_time = time.time() - start_time
     print 'Total time: {} minute(s) {} second(s)'.format(int(total_time / 60), int(total_time % 60))
@@ -49,39 +64,50 @@ def scrape(session, queryid, federal=True, year=2012, get_address=True):
     return contribs
 
 
-def subcat_search(session, base_uri, params, get_address=True):
+def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter=None, count=0):
     contribs = []
 
-    page = 1
-    pages = 1
+    pages = page = first_page = count / PAGE_SIZE + 1
+    if page > 1:
+        print '{} results already saved; skipping to page {}.'.format(count, page)
+
     postal_params = params.copy()
     while page <= pages:
-        print 'Reading page', ('1...' if pages == 1 else '{0} of {1}...'.format(page, pages)),
+        print 'Reading page', ('{}...'.format(page) if page == first_page
+                               else '{} of {}...'.format(page, pages))
 
         params['page'] = page
         req = session.get(base_uri, params=params)
         soup = BeautifulSoup(req.text)
 
-        if page == 1:
-            # check for multiple pages
+        if page == first_page:
+            # check for more pages
             nextlink = soup.find('a', id='next200pagelink')
             if nextlink:
                 m = re.search('totalpages=(\d+)', nextlink['href'])
                 pages = int(m.group(1))
-                print pages, 'page(s) found.'.format(pages)
-        page += 1
+                print pages, 'page(s) found.'
 
+        # find results table, or skip this search if no data
         table = soup.find('table', class_='DataTable')
         if not table:
             if soup.find(class_='nodatamessage'):
                 print 'No results for this search.'
-                continue
+                break
 
+            # no table and no "no data" message means search failed
             raise Exception('Error: no table on page. Try a new query ID.')
 
         page_contribs = []
         rows = table.find('tbody').find_all('tr', recursive=False)
-        print '{} result(s).'.format(len(rows))
+        print '{} result(s) on this page.'.format(len(rows))
+
+        if page == first_page:
+            row_skip = count % PAGE_SIZE
+            if len(rows) >= row_skip:
+                print 'Skipping {} saved result(s).'.format(row_skip)
+                rows = rows[row_skip:]
+
         for row in rows:
             cells = row.find_all('td')
 
@@ -94,30 +120,39 @@ def subcat_search(session, base_uri, params, get_address=True):
                 if ch in num:
                     num = num.split(ch, 1)[0]
 
-            page_contribs.append((int(num), # number
-                                  cells[1].get_text().strip(), # full name
-                                  cells[2].get_text().strip(), # date
+            page_contribs.append((subcat,
+                                  int(num), # number
+                                  cells[1].get_text().strip().encode('utf-8'), # full name
+                                  cells[2].get_text().strip().encode('utf-8'), # date
                                   float(cells[5].get_text().replace(',', '')), # total amount
                                   '', '', ''))
 
-        if get_address:
+        if page_contribs and get_address:
             print 'Fetching addresses...'
             for i, contrib in enumerate(page_contribs):
-                postal_params.update({'addrname': contrib[1],
+                postal_params.update({'addrname': contrib[2],
                                       'addrclientid': params['selectedid'],
                                       'displayaddress': True,
-                                      'page': page,
+                                      'page': params['page'],
                                       })
 
                 req = session.get(base_uri, params=postal_params)
                 soup = BeautifulSoup(req.text, parse_only=SoupStrainer('input'))
 
-                city = soup.find(id='city')['value']
-                province = soup.find(id='province')['value']
-                postal = soup.find(id='postalcode')['value'].upper().replace(' ', '')
+                city = soup.find(id='city')['value'].encode('utf-8')
+                province = soup.find(id='province')['value'].encode('utf-8')
+                postal = (soup.find(id='postalcode')['value']
+                          .upper().replace(' ', '').encode('utf-8'))
 
-                page_contribs[i] = contrib[:4] + (city, province, postal)
+                page_contribs[i] = contrib[:-3] + (city, province, postal)
+                print page_contribs[i]
 
         contribs.extend(page_contribs)
+        if page_contribs and csvwriter is not None:
+            print 'Saving page to CSV...'
+            for contrib in page_contribs:
+                csvwriter.writerow(contrib)
+
+        page += 1
 
     return contribs

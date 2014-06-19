@@ -13,18 +13,20 @@ import query
 import scraper
 
 
-def scrape_contribs(parties, year):
+def scrape_contribs(party, year, get_address=True, save_csv=True):
     session = requests.Session()
+
+    csvpath = './contribs/{}.csv'.format(party) if save_csv else None
 
     print
     print 'Getting federal party contributions for', party
     queryid = query.start_query(session, party, True, year)
-    contribs = scraper.scrape(session, queryid, True, year)
+    contribs = scraper.scrape(session, queryid, True, year, get_address, csvpath)
 
     print
     print 'Getting local riding association contributions for', party
     queryid = query.start_query(session, party, False, year)
-    contribs.extend(scraper.scrape(session, queryid, False, year))
+    contribs.extend(scraper.scrape(session, queryid, False, year, get_address, csvpath))
 
     return contribs
 
@@ -89,7 +91,7 @@ if __name__ == '__main__':
 
     for party in parties:
         contribs = scrape_contribs(party, 2012)
-        save_to_csv(contribs, party)
+        #save_to_csv(contribs, party)
 
     stats = {}
     for csvfile in os.listdir(u'./contribs'):
