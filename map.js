@@ -22,32 +22,28 @@ $(function() {
 	});
 
 	// Load postal code data for each party and draw the first one
-	var parties = {
-		'Green': ['Green Party', 'green'],
-		'Bloc': ['Bloc Quebecois', 'blue']
-	};
-	var stats = {};
+	var parties = [
+		['Bloc Que\u0301be\u0301cois', 'blue'],
+		['Green Party', 'green']
+	];
+	var totals = {};
 	
-	$.each(Object.keys(parties).sort(), function(i, party) {
-		$.ajax('./totals/' + party + '.json', {
-			complete: function(xhr, status) {
-				stats[party] = xhr.responseJSON;
-				if (i == 0)
-					draw_circles(party);
-
-				// Create a link for each party
-				$('<a data-party="' + party + '">' + parties[party][0] + '</a>')
-						.appendTo('#partyList').click(function(e) {
+	$.get('./totals/totals.json', function(data) {
+		totals = data;
+		$.each(parties, function(i, party) {
+			if (totals.hasOwnProperty(party[0])) {
+				$('<a>' + party[0] + '</a>').appendTo('#partyList').click(function(e) {
 					e.preventDefault();
-					draw_circles($(this).attr('data-party'));
+					draw_circles(party[0], party[1]);
 				});
 			}
 		});
+		
+		$('a:first').click();
 	});
-
-	function draw_circles(party) {
-		var pstats = stats[party];
-		var colour = parties[party][1];
+	
+	function draw_circles(party, colour) {
+		var ptotals = totals[party];
 
 		// Clear existing circles
 		$.each(circles, function(i, circle) {
@@ -55,7 +51,7 @@ $(function() {
 		})
 
 		// Add a circle to the map for each postal code.
-		for (var i = 0; i < pstats.length; i++) {
+		for (var i = 0; i < ptotals.length; i++) {
 			var circleOptions = {
 				strokeColor: colour,
 				strokeOpacity: 1,
@@ -63,9 +59,9 @@ $(function() {
 				fillColor: colour,
 				fillOpacity: .25,
 				map: map,
-				center: new google.maps.LatLng(Number(pstats[i]['Lat']),
-						Number(pstats[i]['Lng'])),
-				radius: Number(pstats[i]['Amount']) * 50 / oldZoom
+				center: new google.maps.LatLng(Number(ptotals[i]['Lat']),
+						Number(ptotals[i]['Lng'])),
+				radius: Number(ptotals[i]['Amount']) * 50 / oldZoom
 			};
 			circles.push(new google.maps.Circle(circleOptions));
 		}

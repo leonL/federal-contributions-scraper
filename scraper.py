@@ -2,7 +2,6 @@ import re
 import time
 
 from bs4 import BeautifulSoup
-import grequests
 
 
 FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/DetailedReport'
@@ -28,7 +27,6 @@ def scrape(session, queryid, federal=True, year=2012, get_address=True):
     # get list of federal parties or riding associations
     req = session.get(base_uri, params=params)
     soup = BeautifulSoup(req.text)
-    #print req.text
 
     select = soup.find('select', id='selectedid')
     if not select:
@@ -104,18 +102,14 @@ def subcat_search(session, base_uri, params, get_address=True):
 
         if get_address:
             print 'Fetching addresses...'
-            greqs = []
-            for contrib in page_contribs:
+            for i, contrib in enumerate(page_contribs):
                 postal_params.update({'addrname': contrib[1],
                                       'addrclientid': params['selectedid'],
                                       'displayaddress': True,
                                       'page': page,
                                       })
-                greqs.append(grequests.get(base_uri, params=postal_params, session=session))
-            gresps = grequests.map(greqs)
 
-            print 'Reading addresses...'
-            for i, req in enumerate(gresps):
+                req = session.get(base_uri, params=postal_params)
                 soup = BeautifulSoup(req.text)
 
                 addrinfo = soup.find(id='addressinfo')
@@ -123,7 +117,7 @@ def subcat_search(session, base_uri, params, get_address=True):
                 province = addrinfo.find('input', id='province')['value']
                 postal = addrinfo.find('input', id='postalcode')['value'].upper().replace(' ', '')
 
-                page_contribs[i] = page_contribs[i][:4] + (city, province, postal)
+                page_contribs[i] = contrib[:4] + (city, province, postal)
 
         contribs.extend(page_contribs)
 
