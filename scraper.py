@@ -1,7 +1,7 @@
 import re
 import time
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 
 
 FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/DetailedReport'
@@ -110,12 +110,11 @@ def subcat_search(session, base_uri, params, get_address=True):
                                       })
 
                 req = session.get(base_uri, params=postal_params)
-                soup = BeautifulSoup(req.text)
+                soup = BeautifulSoup(req.text, parse_only=SoupStrainer('input'))
 
-                addrinfo = soup.find(id='addressinfo')
-                city = addrinfo.find('input', id='city')['value']
-                province = addrinfo.find('input', id='province')['value']
-                postal = addrinfo.find('input', id='postalcode')['value'].upper().replace(' ', '')
+                city = soup.find(id='city')['value']
+                province = soup.find(id='province')['value']
+                postal = soup.find(id='postalcode')['value'].upper().replace(' ', '')
 
                 page_contribs[i] = contrib[:4] + (city, province, postal)
 
