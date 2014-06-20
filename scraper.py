@@ -98,15 +98,18 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             # no table and no "no data" message means search failed
             raise Exception('Error: no table on page. Try a new query ID.')
 
-        page_contribs = []
         rows = table.find('tbody').find_all('tr', recursive=False)
         print '{} result(s) on this page.'.format(len(rows))
 
         if page == first_page:
             row_skip = count % PAGE_SIZE
-            if len(rows) >= row_skip:
+            if len(rows) >= row_skip > 0:
                 print 'Skipping {} saved result(s).'.format(row_skip)
                 rows = rows[row_skip:]
+
+        if rows:
+            print 'Parsing{}{}...'.format(', fetching addresses' if get_address else '',
+                                          ', saving to CSV' if csvwriter else '')
 
         for row in rows:
             cells = row.find_all('td')
@@ -119,18 +122,14 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             for ch in ',.':
                 if ch in num:
                     num = num.split(ch, 1)[0]
+            num = int(num)
 
-            page_contribs.append((subcat,
-                                  int(num), # number
-                                  cells[1].get_text().strip().encode('utf-8'), # full name
-                                  cells[2].get_text().strip().encode('utf-8'), # date
-                                  float(cells[5].get_text().replace(',', '')), # total amount
-                                  '', '', ''))
+            name = cells[1].get_text().strip().encode('utf-8')
+            date = cells[2].get_text().strip().encode('utf-8')
+            amount = float(cells[5].get_text().replace(',', ''))
 
-        if page_contribs and get_address:
-            print 'Fetching addresses...'
-            for i, contrib in enumerate(page_contribs):
-                postal_params.update({'addrname': contrib[2],
+            if get_address:
+                postal_params.update({'addrname': name,
                                       'addrclientid': params['selectedid'],
                                       'displayaddress': True,
                                       'page': params['page'],
@@ -143,15 +142,16 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                 province = soup.find(id='province')['value'].encode('utf-8')
                 postal = (soup.find(id='postalcode')['value']
                           .upper().replace(' ', '').encode('utf-8'))
+            else:
+                city = province = postal = ''
 
-                page_contribs[i] = contrib[:-3] + (city, province, postal)
-                print page_contribs[i]
+            contrib = subcat, num, name, date, amount, city, province, postal
+            #print contrib
 
-        contribs.extend(page_contribs)
-        if page_contribs and csvwriter is not None:
-            print 'Saving page to CSV...'
-            for contrib in page_contribs:
+            if csvwriter is not None:
                 csvwriter.writerow(contrib)
+
+            contribs.append(contrib)
 
         page += 1
 
