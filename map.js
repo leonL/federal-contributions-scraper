@@ -29,21 +29,51 @@ $(function() {
 		})
 		oldZoom = newZoom;
 	});
+	
+	
+	// create a link for each party
+	$.each(parties, function(i, pdata) {
+		party = pdata[0];
+		$('#partyList').append('<a>' + party + '</a>');
+	});
+	
+	
+	// load totals for each party and draw bars for each
+	$.get('./results/totals.json', function(json) {
+		var max = 1;
+		for (party in json) {
+			if (json[party] > max)
+				max = json[party];
+		}
+		
+		$.each(parties, function(i, pdata) {
+			var party = pdata[0];
+			var colour = pdata[1];
+			var width = json[party] / max * 100;
+			
+			$('a:contains(' + party + ')').append($('<div>').css({
+				width: '' + width + '%',
+				backgroundColor: colour
+				}));
+		});
+	});
 
 
-	// load amounts for each party and draw links for each of them
+	// load postal group amounts for each party and add circle function for each
 	$.get('./results/postal_groups.json', function(json) {
 		$.each(parties, function(i, pdata) {
-			party = pdata[0];
-			colour = pdata[1];
+			var party = pdata[0];
+			var colour = pdata[1];
 			
-			if (json.hasOwnProperty(party)) {
-				var data = {party: party, colour: colour, amounts: json[party]}
-				$('<a>' + party + '</a>').appendTo('#partyList').click(data, function(e) {
-					e.preventDefault();
-					draw_circles(e.data.party, e.data.colour, e.data.amounts);
-				});
-			}
+			var data = {party: party, colour: colour, amounts: json[party]}
+			$('a:contains(' + party + ')').click(data, function(e) {
+				e.preventDefault();
+				
+				$('a').removeClass('selected');
+				$(this).addClass('selected');
+				
+				draw_circles(e.data.party, e.data.colour, e.data.amounts);
+			});
 		});
 		
 		$('a:first').click();
