@@ -1,8 +1,17 @@
 $(function() {
-	// Enable new cartography and themes
+	var parties = [
+		['Bloc Que\u0301be\u0301cois', 'deepskyblue'],
+		['Conservative Party', 'blue'],
+		['Green Party', 'green'],
+		['Liberal Party', 'red'],
+		['New Democratic Party', 'orange'],
+	];
+
+	
+	// enable new cartography and themes
 	google.maps.visualRefresh = true;
 
-	// Create map centred on Canada
+	// create map centred on Canada
 	var mapOptions = {
 		center: new google.maps.LatLng(53, -95),
 		zoom: 4,
@@ -12,7 +21,7 @@ $(function() {
 	var oldZoom = map.getZoom();
 	var circles = [];
 
-	// Resize circles when zoom changed
+	// resize circles when zoom changed
 	google.maps.event.addListener(map, 'zoom_changed', function(e) {
 		var newZoom = map.getZoom();
 		$.each(circles, function(i, circle) {
@@ -21,20 +30,18 @@ $(function() {
 		oldZoom = newZoom;
 	});
 
-	// Load postal code data for each party and draw the first one
-	var parties = [
-		['Bloc Que\u0301be\u0301cois', 'blue'],
-		['Green Party', 'green']
-	];
-	var totals = {};
-	
-	$.get('./totals/totals.json', function(data) {
-		totals = data;
-		$.each(parties, function(i, party) {
-			if (totals.hasOwnProperty(party[0])) {
-				$('<a>' + party[0] + '</a>').appendTo('#partyList').click(function(e) {
+
+	// load amounts for each party and draw links for each of them
+	$.get('./results/postal_groups.json', function(json) {
+		$.each(parties, function(i, pdata) {
+			party = pdata[0];
+			colour = pdata[1];
+			
+			if (json.hasOwnProperty(party)) {
+				var data = {party: party, colour: colour, amounts: json[party]}
+				$('<a>' + party + '</a>').appendTo('#partyList').click(data, function(e) {
 					e.preventDefault();
-					draw_circles(party[0], party[1]);
+					draw_circles(e.data.party, e.data.colour, e.data.amounts);
 				});
 			}
 		});
@@ -42,8 +49,11 @@ $(function() {
 		$('a:first').click();
 	});
 	
-	function draw_circles(party, colour) {
-		var ptotals = totals[party];
+	
+	// draw circles on the map for one party
+	function draw_circles(party, colour, amounts) {
+		var minSize = 20;
+		var scale = 10;
 
 		// Clear existing circles
 		$.each(circles, function(i, circle) {
@@ -51,7 +61,9 @@ $(function() {
 		})
 
 		// Add a circle to the map for each postal code.
-		for (var i = 0; i < ptotals.length; i++) {
+		for (var i = 0; i < amounts.length; i++) {
+			var radius = (minSize + Number(amounts[i]['Amount'])) * scale / oldZoom;
+			
 			var circleOptions = {
 				strokeColor: colour,
 				strokeOpacity: 1,
@@ -59,9 +71,10 @@ $(function() {
 				fillColor: colour,
 				fillOpacity: .25,
 				map: map,
-				center: new google.maps.LatLng(Number(ptotals[i]['Lat']),
-						Number(ptotals[i]['Lng'])),
-				radius: Number(ptotals[i]['Amount']) * 50 / oldZoom
+				center: new google.maps.LatLng(
+						Number(amounts[i]['Lat']),
+						Number(amounts[i]['Lng'])),
+				radius: radius
 			};
 			circles.push(new google.maps.Circle(circleOptions));
 		}

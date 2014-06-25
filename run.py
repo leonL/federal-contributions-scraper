@@ -9,6 +9,7 @@ import os
 
 import requests
 
+import analyze
 import query
 import scraper
 
@@ -45,40 +46,18 @@ def save_to_csv(contribs, filename):
 
 
 def read_from_csv(filename):
-    print
     print 'Reading ./contribs/{}.csv...'.format(filename)
     with open('./contribs/{}.csv'.format(filename), 'rb') as csvfile:
         return [contrib for contrib in csv.reader(csvfile)]
 
 
-def sum_postal_groups(contribs):
-    print
-    print 'Totalling contribution amounts for each postal code group...'
-    totals = {}
-    for contrib in contribs:
-        amount = float(contrib[4])
-        code = contrib[7][:3]
-
-        totals.setdefault(code, 0)
-        totals[code] += amount
-
-    with open('./postal code groups.csv', 'rb') as csvfile:
-        points = {line[0]: line[1:] for line in csv.reader(csvfile)}
-
-    return [{'PostalCode': code,
-              'Lat': points[code][0],
-              'Lng': points[code][1],
-              'Amount': amount,
-              } for code, amount in totals.iteritems()]
-
-
 def export_json(stats, filename):
-    if not os.path.exists('./totals'):
-        os.makedirs('./totals')
+    if not os.path.exists('./results'):
+        os.makedirs('./results')
 
-    print 'Saving {} postal groups to ./totals/{}.json...'.format(len(stats), filename)
-    with codecs.open('./totals/{}.json'.format(filename), 'wb', encoding='utf-8') as jsonfile:
-        json.dump(stats, jsonfile, ensure_ascii=False)
+    print 'Saving results for {} parties to ./results/{}.json...'.format(len(stats), filename)
+    with codecs.open('./results/{}.json'.format(filename), 'wb', encoding='utf-8') as jsonfile:
+        json.dump(stats, jsonfile)
 
 
 if __name__ == '__main__':
@@ -91,11 +70,19 @@ if __name__ == '__main__':
 
     for party in parties:
         contribs = scrape_contribs(party, 2012)
-        #save_to_csv(contribs, party)
 
-    stats = {}
+    totals = {}
+    cities = {}
+    postal_groups = {}
     for csvfile in os.listdir(u'./contribs'):
         if csvfile[-4:] == '.csv':
-            stats[csvfile[:-4]] = sum_postal_groups(read_from_csv(csvfile[:-4]))
+            party = csvfile[:-4]
+            contribs = read_from_csv(party)
 
-    export_json(stats, 'totals')
+            totals[party] = analyze.sum_total(contribs)
+            cities[party] = analyze.sum_city(contribs)
+            postal_groups[party] = analyze.sum_postal_groups(contribs)
+
+    export_json(totals, 'totals')
+    export_json(cities, 'cities')
+    export_json(postal_groups, 'postal_groups')
