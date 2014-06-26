@@ -126,7 +126,7 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
 
             name = cells[1].get_text().strip().encode('utf-8')
             date = cells[2].get_text().strip().encode('utf-8')
-            amount = float(cells[5].get_text().replace(',', ''))
+            amount = int(float(cells[5].get_text().replace(',', '')) * 100)
 
             if get_address:
                 postal_params.update({'addrname': name,

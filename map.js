@@ -1,10 +1,10 @@
 $(function() {
 	var parties = [
-		['Bloc Que\u0301be\u0301cois', 'deepskyblue'],
+		['Bloc Qu\u00e9b\u00e9cois', 'deepskyblue'],
 		['Conservative Party', 'blue'],
 		['Green Party', 'green'],
 		['Liberal Party', 'red'],
-		['New Democratic Party', 'orange'],
+		['New Democratic Party', 'orange']
 	];
 
 	
@@ -39,6 +39,7 @@ $(function() {
 	
 	
 	// load totals for each party and draw bars for each
+	var totals = {};
 	$.get('./results/totals.json', function(json) {
 		var max = 1;
 		for (party in json) {
@@ -51,10 +52,20 @@ $(function() {
 			var colour = pdata[1];
 			var width = json[party] / max * 100;
 			
+			// format total amount as a currency string
+			var total = (Number(json[party]) / 100).toFixed(2);
+			var offset = total.length % 3;
+			totals[party] = '$' + total.slice(0, offset);
+			for (i = offset; i < total.length - 3; i += 3) {
+				totals[party] += (i > 0 ? ',' : '') + total.slice(i, i + 3);
+			}
+			totals[party] += total.slice(-3);
+			
+			// create colour bar
 			$('a:contains(' + party + ')').append($('<div>').css({
 				width: '' + width + '%',
 				backgroundColor: colour
-				}));
+			}));
 		});
 	});
 
@@ -72,11 +83,14 @@ $(function() {
 				$('a').removeClass('selected');
 				$(this).addClass('selected');
 				
+				var colour = $('div', this).css('background-color');
+				$('#info').show();
+				$('#info h2').text($(this).text()).css('border-color', colour);
+				$('#info #total').text(totals[party]).css('color', colour);
+				
 				draw_circles(e.data.party, e.data.colour, e.data.amounts);
 			});
 		});
-		
-		$('a:first').click();
 	});
 	
 	
@@ -92,7 +106,8 @@ $(function() {
 
 		// Add a circle to the map for each postal code.
 		for (var i = 0; i < amounts.length; i++) {
-			var radius = (minSize + Number(amounts[i]['Amount'])) * scale / oldZoom;
+			var amount = Number(amounts[i]['Amount']) / 100;
+			var radius = (minSize + amount) * scale / oldZoom;
 			
 			var circleOptions = {
 				strokeColor: colour,

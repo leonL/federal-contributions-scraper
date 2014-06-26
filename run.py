@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import codecs
 import csv
 import json
@@ -17,7 +15,7 @@ import scraper
 def scrape_contribs(party, year, get_address=True, save_csv=True):
     session = requests.Session()
 
-    csvpath = './contribs/{}.csv'.format(party) if save_csv else None
+    csvpath = u'./contribs/{}.csv'.format(party) if save_csv else None
 
     print
     print 'Getting federal party contributions for', party
@@ -37,8 +35,8 @@ def save_to_csv(contribs, filename):
         os.makedirs('./contribs')
 
     print
-    print 'Saving {} contributions to ./contribs/{}.csv...'.format(len(contribs), filename)
-    with open('./contribs/{}.csv'.format(filename), 'wb') as csvfile:
+    print u'Saving {} contributions to ./contribs/{}.csv...'.format(len(contribs), filename)
+    with open(u'./contribs/{}.csv'.format(filename), 'wb') as csvfile:
         writer = csv.writer(csvfile, lineterminator='\n')
 
         for contrib in contribs:
@@ -46,26 +44,26 @@ def save_to_csv(contribs, filename):
 
 
 def read_from_csv(filename):
-    print 'Reading ./contribs/{}.csv...'.format(filename)
-    with open('./contribs/{}.csv'.format(filename), 'rb') as csvfile:
+    print u'Reading ./contribs/{}.csv...'.format(filename)
+    with open(u'./contribs/{}.csv'.format(filename), 'rb') as csvfile:
         return [contrib for contrib in csv.reader(csvfile)]
 
 
-def export_json(stats, filename):
+def export_json(results, filename):
     if not os.path.exists('./results'):
         os.makedirs('./results')
 
-    print 'Saving results for {} parties to ./results/{}.json...'.format(len(stats), filename)
-    with codecs.open('./results/{}.json'.format(filename), 'wb', encoding='utf-8') as jsonfile:
-        json.dump(stats, jsonfile)
+    print 'Saving results for {} parties to ./results/{}.json...'.format(len(results), filename)
+    with codecs.open(u'./results/{}.json'.format(filename), 'wb', encoding='utf-8') as jsonfile:
+        json.dump(results, jsonfile)
 
 
 if __name__ == '__main__':
-    parties = ['Bloc Québécois',
-               'Conservative Party',
-               'Green Party',
-               'Liberal Party',
-               'New Democratic Party',
+    parties = [u'Bloc Québécois',
+               u'Conservative Party',
+               u'Green Party',
+               u'Liberal Party',
+               u'New Democratic Party',
                ]
 
     for party in parties:

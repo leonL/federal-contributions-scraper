@@ -1,8 +1,15 @@
 body { font-family: sans-serif; text-align: center; }
 
-#mapDiv { width: 100%; height: 600px; display: inline-block; }
+#mapDiv { display: inline-block; width: 100%; width: 1200px; height: 800px; }
 
-#partyList { display: inline-block; margin-left: 20px; text-align: left; vertical-align: top; }
-#partyList a { display: block; width: 200px; cursor: pointer; }
+#sidebar { display: inline-block; width: 300px; margin-left: 20px; vertical-align: top;
+	text-align: left; }
+
+#partyList { margin-bottom: 50px; }
+#partyList a { display: block; cursor: pointer; }
 #partyList a.selected { font-weight: bold; }
 #partyList a div { height: 20px; margin-bottom: 10px; }
+
+#info { display: none; }
+#info h2 { border-bottom: 2px solid; }
+#info span { font-weight: bold; }
