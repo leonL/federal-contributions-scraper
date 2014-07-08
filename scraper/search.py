@@ -10,7 +10,7 @@ RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/DetailedReport'
 PAGE_SIZE = 200
 
 
-def scrape(session, queryid, federal=True, year=2012, get_address=True, csvpath=None):
+def search_contribs(session, queryid, federal=True, year=2012, get_address=True, csvpath=None):
     base_uri = FEDERAL_URI if federal else RIDING_URI
     params = {'act': 'C2',
               'returntype': 1,

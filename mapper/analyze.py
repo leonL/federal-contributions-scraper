@@ -1,4 +1,5 @@
 import csv
+import os
 
 
 def sum_total(contribs):
@@ -18,7 +19,7 @@ def sum_city(contribs):
 
 
 def sum_postal_groups(contribs):
-    with open('./postal code groups.csv', 'rb') as csvfile:
+    with open(os.path.join(os.path.dirname(__file__), 'postal code groups.csv'), 'rb') as csvfile:
         points = {line[0]: line[1:] for line in csv.reader(csvfile)}
 
     totals = {}
