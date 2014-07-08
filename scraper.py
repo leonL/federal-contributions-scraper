@@ -38,14 +38,15 @@ def scrape(session, queryid, federal=True, year=2012, get_address=True, csvpath=
     options = select.find_all('option')
     for o, option in enumerate(options):
         params['selectedid'] = option['value']
-        subcat = option.get_text().split(' /', 1)[0].encode('utf-8')
+        subcat = option.get_text().split(' /', 1)[0]
 
         print 'Search {} of {}:'.format(o + 1, len(options)), subcat
 
         # if a path is specified, look for existing records in a csv file
         try:
             with open(csvpath, 'rb') as csvfile:
-                count = len([contrib for contrib in csv.reader(csvfile) if contrib[0] == subcat])
+                count = len([contrib for contrib in csv.reader(csvfile)
+                             if contrib[0].decode('utf-8') == subcat])
         except IOError:
             count = 0
 
@@ -128,8 +129,8 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                     num = num.split(ch, 1)[0]
             num = int(num)
 
-            name = cells[1].get_text().strip().encode('utf-8')
-            date = cells[2].get_text().strip().encode('utf-8')
+            name = cells[1].get_text().strip()
+            date = cells[2].get_text().strip()
             amount = int(float(cells[5].get_text().replace(',', '')) * 100)
 
             if get_address:
@@ -142,10 +143,10 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                 req = session.get(base_uri, params=postal_params)
                 soup = BeautifulSoup(req.text, parse_only=SoupStrainer('input'))
 
-                city = soup.find(id='city')['value'].encode('utf-8')
-                province = soup.find(id='province')['value'].encode('utf-8')
+                city = soup.find(id='city')['value']
+                province = soup.find(id='province')['value']
                 postal = (soup.find(id='postalcode')['value']
-                          .upper().replace(' ', '').encode('utf-8'))
+                          .upper().replace(' ', ''))
             else:
                 city = province = postal = ''
 
@@ -153,7 +154,8 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             #print contrib
 
             if csvwriter is not None:
-                csvwriter.writerow(contrib)
+                csvwriter.writerow([field.encode('utf-8') if isinstance(field, unicode)
+                                    else field for field in contrib])
 
             contribs.append(contrib)
 
