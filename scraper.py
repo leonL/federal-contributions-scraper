@@ -40,26 +40,30 @@ def scrape(session, queryid, federal=True, year=2012, get_address=True, csvpath=
         params['selectedid'] = option['value']
         subcat = option.get_text().split(' /', 1)[0].encode('utf-8')
 
-        print
         print 'Search {} of {}:'.format(o + 1, len(options)), subcat
 
+        # if a path is specified, look for existing records in a csv file
         try:
             with open(csvpath, 'rb') as csvfile:
                 count = len([contrib for contrib in csv.reader(csvfile) if contrib[0] == subcat])
         except IOError:
             count = 0
 
+        # if a path is specified, open as a csv file for writing on-the-fly
         if csvpath:
             with open(csvpath, 'a+b', 1) as csvfile:
                 print 'Opening CSV file for writing.'
                 csvwriter = csv.writer(csvfile, lineterminator='\n')
                 contribs.extend(subcat_search(subcat, session, base_uri, params, get_address,
-                                                csvwriter, count))
+                                              csvwriter, count))
         else:
             contribs.extend(subcat_search(subcat, session, base_uri, params, get_address))
 
-    total_time = time.time() - start_time
-    print 'Total time: {} minute(s) {} second(s)'.format(int(total_time / 60), int(total_time % 60))
+    total_time = int(time.time() - start_time)
+    minutes, seconds = divmod(total_time, 60)
+    hours, minutes = divmod(minutes, 60)
+    print 'Total time: {}:{:02}:{:02}'.format(hours, minutes, seconds)
+    print
 
     return contribs
 
@@ -155,4 +159,5 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
 
         page += 1
 
+    print
     return contribs

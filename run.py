@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import codecs
+from __future__ import unicode_literals
+
 import csv
 import json
 import os
@@ -15,14 +16,12 @@ import scraper
 def scrape_contribs(party, year, get_address=True, save_csv=True):
     session = requests.Session()
 
-    csvpath = u'./contribs/{}.csv'.format(party) if save_csv else None
+    csvpath = './contribs/{}.csv'.format(party) if save_csv else None
 
-    print
     print 'Getting federal party contributions for', party
     queryid = query.start_query(session, party, True, year)
     contribs = scraper.scrape(session, queryid, True, year, get_address, csvpath)
 
-    print
     print 'Getting local riding association contributions for', party
     queryid = query.start_query(session, party, False, year)
     contribs.extend(scraper.scrape(session, queryid, False, year, get_address, csvpath))
@@ -34,18 +33,17 @@ def save_to_csv(contribs, filename):
     if not os.path.exists('./contribs'):
         os.makedirs('./contribs')
 
-    print
-    print u'Saving {} contributions to ./contribs/{}.csv...'.format(len(contribs), filename)
-    with open(u'./contribs/{}.csv'.format(filename), 'wb') as csvfile:
+    print 'Saving {} contributions to ./contribs/{}.csv...'.format(len(contribs), filename)
+    with open('./contribs/{}.csv'.format(filename), 'wb') as csvfile:
         writer = csv.writer(csvfile, lineterminator='\n')
 
         for contrib in contribs:
-            writer.writerow([unicode(field).encode('utf-8') for field in contrib])
+            writer.writerow(contrib)
 
 
 def read_from_csv(filename):
-    print u'Reading ./contribs/{}.csv...'.format(filename)
-    with open(u'./contribs/{}.csv'.format(filename), 'rb') as csvfile:
+    print 'Reading ./contribs/{}.csv...'.format(filename)
+    with open('./contribs/{}.csv'.format(filename), 'rb') as csvfile:
         return [contrib for contrib in csv.reader(csvfile)]
 
 
@@ -54,16 +52,16 @@ def export_json(results, filename):
         os.makedirs('./results')
 
     print 'Saving results for {} parties to ./results/{}.json...'.format(len(results), filename)
-    with codecs.open(u'./results/{}.json'.format(filename), 'wb', encoding='utf-8') as jsonfile:
+    with open('./results/{}.json'.format(filename), 'wb') as jsonfile:
         json.dump(results, jsonfile)
 
 
 if __name__ == '__main__':
-    parties = [u'Bloc Québécois',
-               u'Conservative Party',
-               u'Green Party',
-               u'Liberal Party',
-               u'New Democratic Party',
+    parties = ['Bloc Québécois',
+               'Conservative Party',
+               'Green Party',
+               'Liberal Party',
+               'New Democratic Party',
                ]
 
     for party in parties:
@@ -72,7 +70,7 @@ if __name__ == '__main__':
     totals = {}
     cities = {}
     postal_groups = {}
-    for csvfile in os.listdir(u'./contribs'):
+    for csvfile in os.listdir('./contribs'):
         if csvfile[-4:] == '.csv':
             party = csvfile[:-4]
             contribs = read_from_csv(party)
