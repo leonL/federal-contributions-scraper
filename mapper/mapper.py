@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import csv
 import json
 import os
+import unicodedata
 
 import analyze
 
@@ -18,7 +19,8 @@ def analyze_contribs(contribs_dir, results_dir):
             with open(csvpath, 'rb') as csvfile:
                 contribs = [contrib for contrib in csv.reader(csvfile)]
 
-            party = filename[:-4]
+            # normalize json data to composed utf-8 so it will match map.js
+            party = unicodedata.normalize('NFC', filename[:-4]).encode('utf-8')
 
             totals[party] = analyze.sum_total(contribs)
             cities[party] = analyze.sum_city(contribs)
