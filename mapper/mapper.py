@@ -26,8 +26,8 @@ def analyze_contribs(contribs_dir, results_dir):
                 contribs = [contrib for contrib in csv.reader(csvfile)]
 
             for rtype in rtypes:
-                results[rtype].setdefault(party, {})
-                results[rtype][party][year] = getattr(analyze, 'sum_' + rtype)(contribs)
+                results[rtype].setdefault(year, {})
+                results[rtype][year][party] = getattr(analyze, 'sum_' + rtype)(contribs)
 
     for rtype in rtypes:
         export_json(results[rtype], results_dir, rtype)
