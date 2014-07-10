@@ -1,15 +1,20 @@
-body { font-family: sans-serif; text-align: center; }
+body { margin: 15px 0; font-family: sans-serif; font-size: 16px; text-align: center; }
 
 #mapDiv { display: inline-block; width: 100%; width: 1200px; height: 800px; }
 
 #sidebar { display: inline-block; width: 300px; margin-left: 20px; vertical-align: top;
 	text-align: left; }
 
-#partyList { margin-bottom: 50px; }
-#partyList a { display: block; cursor: pointer; }
+h2 { margin-top: 0; border-bottom: 2px solid; }
+
+select { border: 1px solid #000; border-radius: 5px; background: #fff;
+	font-family: inherit; font-size: inherit; }
+
+#partyList { margin-bottom: 30px; border-top: 1px solid #eee; }
+#partyList a { display: block; padding: 10px 0; border-bottom: 1px solid #eee; cursor: pointer; }
 #partyList a.selected { font-weight: bold; }
-#partyList a div { height: 20px; margin-bottom: 10px; }
+#partyList a:hover { background: #eee; }
+#partyList a div { height: 20px; }
 
 #info { display: none; }
-#info h2 { border-bottom: 2px solid; }
 #info span { font-weight: bold; }
