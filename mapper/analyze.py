@@ -2,11 +2,11 @@ import csv
 import os
 
 
-def sum_total(contribs):
+def sum_totals(contribs):
     return sum(float(contrib[4]) for contrib in contribs)
 
 
-def sum_city(contribs):
+def sum_cities(contribs):
     cities = {}
     for contrib in contribs:
         amount = float(contrib[4])

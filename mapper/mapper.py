@@ -3,32 +3,34 @@ from __future__ import unicode_literals
 import csv
 import json
 import os
+import re
 import unicodedata
 
 import analyze
 
 
 def analyze_contribs(contribs_dir, results_dir):
-    totals = {}
-    cities = {}
-    postal_groups = {}
+    rtypes = ['totals', 'cities', 'postal_groups']
+    results = {rtype: {} for rtype in rtypes}
+
     for filename in os.listdir(contribs_dir):
-        if filename[-4:] == '.csv':
+        m = re.match('(.+)\.(\d{4})\.csv', filename)
+        if m is not None:
+            # normalize json data to composed utf-8 so it will match map.js
+            party = unicodedata.normalize('NFC', m.group(1)).encode('utf-8')
+            year = int(m.group(2))
+
             csvpath = os.path.join(contribs_dir, filename)
             print 'Reading contributions from {}...'.format(csvpath)
             with open(csvpath, 'rb') as csvfile:
                 contribs = [contrib for contrib in csv.reader(csvfile)]
 
-            # normalize json data to composed utf-8 so it will match map.js
-            party = unicodedata.normalize('NFC', filename[:-4]).encode('utf-8')
+            for rtype in rtypes:
+                results[rtype].setdefault(party, {})
+                results[rtype][party][year] = getattr(analyze, 'sum_' + rtype)(contribs)
 
-            totals[party] = analyze.sum_total(contribs)
-            cities[party] = analyze.sum_city(contribs)
-            postal_groups[party] = analyze.sum_postal_groups(contribs)
-
-    export_json(totals, results_dir, 'totals')
-    export_json(cities, results_dir, 'cities')
-    export_json(postal_groups, results_dir, 'postal_groups')
+    for rtype in rtypes:
+        export_json(results[rtype], results_dir, rtype)
 
 
 def read_from_csv(contribs_dir, party):

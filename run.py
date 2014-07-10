@@ -15,6 +15,8 @@ if __name__ == '__main__':
                'Liberal Party',
                'New Democratic Party',
                ]
+    start_year = 2012
+    end_year = 2013
 
     contribs_dir = './contribs'
     if not os.path.exists(contribs_dir):
@@ -24,7 +26,9 @@ if __name__ == '__main__':
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
+    # scrape data from elections website
     for party in parties:
-        scraper.scrape_contribs(party, 2012, contribs_dir)
+        scraper.scrape_contribs(party, start_year, end_year, contribs_dir)
 
+    # analyze data and export for map
     mapper.analyze_contribs(contribs_dir, results_dir)
