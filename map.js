@@ -13,8 +13,8 @@ $(function() {
 	
 	// create map centred on Canada
 	var mapOptions = {
-		center: new google.maps.LatLng(53, -95),
-		zoom: 4,
+		center: new google.maps.LatLng(60, -98),
+		zoom: $('#mapDiv').height() > 400 ? 4 : 3,
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
 	var map = new google.maps.Map(document.getElementById('mapDiv'), mapOptions);

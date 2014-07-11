@@ -1,9 +1,9 @@
 body { margin: 15px 0; font-family: sans-serif; font-size: 16px; text-align: center; }
 
-#mapDiv { display: inline-block; width: 100%; width: 1200px; height: 800px; }
+#mapDiv { display: inline-block; width: 1200px; height: 800px; }
 
-#sidebar { display: inline-block; width: 300px; margin-left: 20px; vertical-align: top;
-	text-align: left; }
+#sidebar { display: inline-block; width: 250px; max-width: 100%; margin-left: 20px;
+	vertical-align: top; text-align: left; }
 
 h2 { margin-top: 0; border-bottom: 2px solid; }
 
@@ -18,3 +18,12 @@ select { border: 1px solid #000; border-radius: 5px; background: #fff;
 
 #info { display: none; }
 #info span { font-weight: bold; }
+
+@media only screen and (max-width: 1500px) {
+	#mapDiv { width: 900px; height: 600px; }
+}
+
+@media only screen and (max-width: 1200px) {
+	#mapDiv { width: 100%; max-width: 900px; height: 400px; }
+	#sidebar { width: 100%; max-width: 900px; box-sizing: border-box; margin: 0; padding: 20px; }
+}
