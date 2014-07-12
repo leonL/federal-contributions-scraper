@@ -22,7 +22,7 @@ def sum_postal_groups(contribs):
     with open(os.path.join(os.path.dirname(__file__), 'postal code groups.csv'), 'rb') as csvfile:
         points = {line[0]: line[1:] for line in csv.reader(csvfile)}
 
-    totals = {}
+    codes = {}
     for contrib in contribs:
         amount = float(contrib[4])
         code = contrib[7][:3]
@@ -39,11 +39,14 @@ def sum_postal_groups(contribs):
             #print 'Contribution amount over $1200:', contrib
             pass
 
-        totals.setdefault(code, 0)
-        totals[code] += amount
+        codes.setdefault(code, {'Label': code,
+                                'Lat': points[code][0],
+                                'Lng': points[code][1],
+                                'Amount': 0,
+                                'Count': 0,
+                                })
 
-    return [{'Label': code,
-             'Lat': points[code][0],
-             'Lng': points[code][1],
-             'Amount': amount,
-             } for code, amount in totals.iteritems()]
+        codes[code]['Amount'] += amount
+        codes[code]['Count'] += 1
+
+    return codes.values()

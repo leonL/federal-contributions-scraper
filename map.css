@@ -17,7 +17,7 @@ select { border: 1px solid #000; border-radius: 5px; background: #fff;
 #partyList a div { height: 20px; }
 
 #info { display: none; }
-#info span { font-weight: bold; }
+#info #total { font-weight: bold; font-size: 24px; }
 
 @media only screen and (max-width: 1500px) {
 	#mapDiv { width: 900px; height: 600px; }

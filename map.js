@@ -41,6 +41,15 @@ $(function() {
 		return index;
 	}
 	
+	// divide by 100, fix to two decimal places and add commas
+	function format_currency(cents) {
+		var dollars = (cents / 100).toFixed(2);
+		var dollars_text = dollars.slice(-3);
+		for (i = -3; i > -dollars.length; i -= 3)
+			dollars_text = dollars.slice(i - 3, i) + (i < -3 ? ',' : '') + dollars_text;
+		return dollars_text;
+	}
+	
 	
 	// load totals for each party and draw bars for each
 	var party_totals = {};
@@ -76,8 +85,8 @@ $(function() {
 			});
 		});
 		
-		var minSize = 20;
-		var scale = 200000000 / max;
+		var minSize = 20000;
+		var scale = 2000000 / max;
 		
 		// generate circles for each party in each year
 		$.each(years, function(i, year) {
@@ -88,9 +97,9 @@ $(function() {
 				var colour = colours[party];
 				
 				$.each(results[year][party], function(i, pgroup) {
-					var amount = Number(pgroup['Amount']) / 100;
+					var amount = Number(pgroup['Amount']);
 					var radius = (minSize + amount) * scale / oldZoom;
-					var circleOptions = {
+					var circle = new google.maps.Circle({
 						strokeColor: colour,
 						strokeOpacity: 1,
 						strokeWeight: 1,
@@ -102,8 +111,23 @@ $(function() {
 							Number(pgroup['Lng'])
 						),
 						radius: radius
-					};
-					party_circles[year][party].push(new google.maps.Circle(circleOptions));
+					});
+					var code = pgroup['Label']
+					circle.set('code', pgroup['Label']);
+					circle.set('count', pgroup['Count']);
+					circle.set('amount', format_currency(amount));
+					
+					google.maps.event.addListener(circle, 'mouseover', function() {
+						$('#codes').append(
+							'<p id="code-' + this.code + '"><b>' + this.code + '</b> $' +
+							this.amount + ' (' + this.count + ')</p>'
+						);
+					});
+					google.maps.event.addListener(circle, 'mouseout', function() {
+						$('#codes #code-' + this.code).remove();
+					});
+
+					party_circles[year][party].push(circle);
 				});
 			});
 		});
@@ -120,7 +144,6 @@ $(function() {
 			if (!party_totals[year].hasOwnProperty(party)) return true;
 			max = Math.max(max, Number(party_totals[year][party]));
 		});
-		console.log(party_totals[year]);
 		
 		// create colour bars for each party
 		$.each(parties, function(i, party) {
@@ -146,21 +169,13 @@ $(function() {
 		var year = $('#years').val();
 		var party = $(this).text();
 		var colour = colours[party];
-		
-		// format total amount as a currency string with commas
-		var total = (party_totals[year][party] / 100).toFixed(2);
-		var offset = total.length % 3;
-		var total_text = '$' + total.slice(0, offset);
-		for (i = offset; i < total.length - 3; i += 3) {
-			total_text += (i > 0 ? ',' : '') + total.slice(i, i + 3);
-		}
-		total_text += total.slice(-3);
+		var party_total = '$' + format_currency(party_totals[year][party]);
 		
 		// show info dialog for this party
 		$('#info').show();
 		$('#info h2').text($(this).text()).css('border-color', colour);
 		$('#info #year').text(year);
-		$('#info #total').text(total_text).css('color', colour);
+		$('#info #total').text(party_total).css('color', colour);
 		
 		// clear existing circles and enable this party's circles
 		$.each(circles, function(i, circle) {
