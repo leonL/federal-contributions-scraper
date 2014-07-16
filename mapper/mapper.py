@@ -27,7 +27,7 @@ def analyze_contribs(contribs_dir, results_dir):
 
             for rtype in rtypes:
                 results[rtype].setdefault(year, {})
-                results[rtype][year][party] = getattr(analyze, 'sum_' + rtype)(contribs)
+                results[rtype][year][party] = getattr(analyze, rtype)(contribs)
 
     for rtype in rtypes:
         export_json(results[rtype], results_dir, rtype)

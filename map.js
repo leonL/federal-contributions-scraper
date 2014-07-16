@@ -62,7 +62,7 @@ $(function() {
 			$.each(sorted_index(results[year]), function(i, party) {
 				// skip parties that aren't in this year's results
 				if (!results[year].hasOwnProperty(party)) return true;
-				party_totals[year][party] = Number(results[year][party]);
+				party_totals[year][party] = Number(results[year][party]['sum_total']);
 			});
 		});
 		
