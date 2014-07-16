@@ -140,13 +140,20 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                                       'page': params['page'],
                                       })
 
-                req = session.get(base_uri, params=postal_params)
-                soup = BeautifulSoup(req.text, parse_only=SoupStrainer('input'))
+                tries = 0
+                while tries < 5:
+                    req = session.get(base_uri, params=postal_params)
+                    soup = BeautifulSoup(req.text, parse_only=SoupStrainer('input'))
 
-                city = soup.find(id='city')['value']
-                province = soup.find(id='province')['value']
-                postal = (soup.find(id='postalcode')['value']
-                          .upper().replace(' ', ''))
+                    try:
+                        city = soup.find(id='city')['value']
+                        province = soup.find(id='province')['value']
+                        postal = (soup.find(id='postalcode')['value']
+                                  .upper().replace(' ', ''))
+                        break
+                    except TypeError:
+                        tries += 1
+
             else:
                 city = province = postal = ''
 
