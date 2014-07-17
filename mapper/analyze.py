@@ -6,20 +6,35 @@ def totals(contribs):
     # temporary hack - need a better way to separate federal from riding contribs
     fed_name = contribs[0][0]
 
-    contribs_fed = [c for c in contribs if c[0] == fed_name]
-    contribs_eda = [c for c in contribs if c[0] != fed_name]
+    contribs_fed = []
+    contribs_eda = []
+    uniques = {}
 
-    sum_fed = sum(int(contrib[4]) for contrib in contribs_fed)
-    sum_eda = sum(int(contrib[4]) for contrib in contribs_eda)
+    for c in contribs:
+        if c[0] == fed_name:
+            contribs_fed.append(c)
+        else:
+            contribs_eda.append(c)
 
-    return {'sum_total': sum_fed + sum_eda,
+        uid = (c[2], c[5], c[6], c[7])
+        uniques.setdefault(uid, 0)
+        uniques[uid] += int(c[4])
+
+    sum_fed = sum(int(c[4]) for c in contribs_fed)
+    sum_eda = sum(int(c[4]) for c in contribs_eda)
+    sum_total = sum_fed + sum_eda
+
+    return {'sum_total': sum_total,
             'sum_federal': sum_fed,
             'sum_riding': sum_eda,
-            'count_total': len(contribs_fed) + len(contribs_eda),
+            'count_total': len(contribs),
             'count_federal': len(contribs_fed),
             'count_riding': len(contribs_eda),
-            'unique_contributors': len(set((contrib[1], contrib[5], contrib[6], contrib[7])
-                                           for contrib in contribs)),
+            'average_total': sum_total / len(contribs) if contribs else 0,
+            'average_federal': sum_fed / len(contribs_fed) if contribs_fed else 0,
+            'average_riding': sum_eda / len(contribs_eda) if contribs_eda else 0,
+            'count_contributors': len(uniques),
+            'average_contributor': sum_total / len(uniques),
             }
 
 
