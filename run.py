@@ -49,8 +49,7 @@ if __name__ == '__main__':
         m = re.match('(\d{4})(?:-(\d{4}))?', args.year)
         if m is not None:
             start_year = int(m.group(1))
-            if m.group(2) is not None:
-                end_year = int(m.group(2))
+            end_year = int(m.group(2)) if m.group(2) is not None else start_year
 
     # scrape data from elections website
     if not args.analyze_only:

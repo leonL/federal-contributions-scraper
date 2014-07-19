@@ -82,8 +82,28 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                                else '{} of {}...'.format(page, pages))
 
         params['page'] = page
-        req = session.get(base_uri, params=params)
-        soup = BeautifulSoup(req.text)
+
+        tries = 1
+        maxtries = 5
+        while tries <= maxtries:
+            req = session.get(base_uri, params=params)
+            soup = BeautifulSoup(req.text)
+
+            # find results table, or skip this search if no data
+            table = soup.find('table', class_='DataTable')
+            if table:
+                break
+
+            if soup.find(class_='nodatamessage'):
+                print 'No results for this search.'
+                break
+
+            # no table and no "no data" message means search failed
+            print 'Error: no table on results page. (try {} of {})'.format(tries, maxtries)
+            tries += 1
+
+        if not table:
+            break
 
         if page == first_page:
             # check for more pages
@@ -92,16 +112,6 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                 m = re.search('totalpages=(\d+)', nextlink['href'])
                 pages = int(m.group(1))
                 print pages, 'page(s) found.'
-
-        # find results table, or skip this search if no data
-        table = soup.find('table', class_='DataTable')
-        if not table:
-            if soup.find(class_='nodatamessage'):
-                print 'No results for this search.'
-                break
-
-            # no table and no "no data" message means search failed
-            raise Exception('Error: no table on page. Try a new query ID.')
 
         rows = table.find('tbody').find_all('tr', recursive=False)
         print '{} result(s) on this page.'.format(len(rows))
@@ -127,7 +137,6 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             for ch in ',.':
                 if ch in num:
                     num = num.split(ch, 1)[0]
-            num = int(num)
 
             name = cells[1].get_text().strip()
             date = cells[2].get_text().strip()
@@ -153,6 +162,7 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                         break
                     except TypeError:
                         tries += 1
+                        print 'Error getting address info (try {} of {})'.format(tries, maxtries)
 
             else:
                 city = province = postal = ''
