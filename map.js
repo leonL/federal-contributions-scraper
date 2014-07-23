@@ -14,7 +14,7 @@ $(function() {
 	// create map centred on Canada
 	var mapOptions = {
 		center: new google.maps.LatLng(60, -98),
-		zoom: $('#mapDiv').height() > 400 ? 4 : 3,
+		zoom: $('#mapDiv').height() > 600 ? 4 : 3,
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
 	var map = new google.maps.Map(document.getElementById('mapDiv'), mapOptions);
@@ -26,10 +26,17 @@ $(function() {
 		var newZoom = map.getZoom();
 		$.each(circles, function(i, circle) {
 			circle.setRadius((circle.getRadius() * oldZoom) / newZoom);
-		})
+		});
 		oldZoom = newZoom;
 	});
 	
+	// remove all circles from the map
+	function clear_circles() {
+		$.each(circles, function(i, circle) {
+			circle.setMap(null);
+		});
+		circles = [];
+	}
 	
 	// return a sorted list of an object's keys
 	function sorted_index(obj) {
@@ -41,30 +48,49 @@ $(function() {
 		return index;
 	}
 	
-	// divide by 100, fix to two decimal places and add commas
-	function format_currency(cents) {
-		var dollars = (cents / 100).toFixed(2);
-		var dollars_text = dollars.slice(-3);
-		for (i = -3; i > -dollars.length; i -= 3)
-			dollars_text = dollars.slice(i - 3, i) + (i < -3 ? ',' : '') + dollars_text;
-		return dollars_text;
+	// add commas to a number
+	function add_commas(number) {
+		var numtext = '' + number;
+		var commas_text = '';
+		for (i = numtext.length; i > 0; i -= 3)
+			commas_text = (numtext.slice(Math.max(0, i - 3), i)
+					+ (i < numtext.length ? ',' : '') + commas_text);
+		return commas_text;
 	}
 	
+	// divide by 100, fix to two decimal places and add dollar sign
+	function format_currency(cents) {
+		var dollars = (cents / 100).toFixed(2);
+		return '$' + add_commas(dollars.slice(0, -3)) + dollars.slice(-3);
+	}
 	
 	// load totals for each party and draw bars for each
 	var party_totals = {};
-	$.get('./results/totals.json', function(results) {
-		$.each(sorted_index(results), function(i, year) {
+	$.get('./results/totals.json', function(totals) {
+		// get total for each party and year, and find the maximum
+		var max = 1;
+		$.each(totals, function(year, ydata) {
+			$.each(ydata, function(party, pdata) {
+				max = Math.max(max, pdata['sum_total']);
+			});
+		});
+		
+		$.each(sorted_index(totals).reverse(), function(i, year) {
 			$('#years').append('<option>' + year + '</option>');
 			$('#partyList').append('<div id="list-' + year + '">');
 			
-			party_totals[year] = {};
-			$.each(sorted_index(results[year]), function(i, party) {
-				// skip parties that aren't in this year's results
-				if (!results[year].hasOwnProperty(party)) return true;
-				party_totals[year][party] = Number(results[year][party]['sum_total']);
+			// create colour bars for each party
+			$.each(sorted_index(totals[year]), function(i, party) {
+				$('#partyList #list-' + year).append(
+					$('<a>' + party + '</a>').append($('<div>').css({
+						width: '' + (totals[year][party]['sum_total'] / max * 100) + '%',
+						backgroundColor: colours[party]
+					}))
+				);
 			});
 		});
+		
+		party_totals = totals;
 		
 		$('#years').trigger('change');
 	});
@@ -72,14 +98,14 @@ $(function() {
 	
 	// load geographical results for each party and generate circles for each
 	var party_circles = {};
-	$.get('./results/postal_groups.json', function(results) {
-		var years = sorted_index(results);
+	$.get('./results/postal_groups.json', function(pgroups) {
+		var years = sorted_index(pgroups);
 		
 		// find largest single result and set scale accordingly
 		var max = 1;
 		$.each(years, function(i, year) {
-			$.each(sorted_index(results[year]), function(i, party) {
-				$.each(results[year][party], function(i, pgroup) {
+			$.each(sorted_index(pgroups[year]), function(i, party) {
+				$.each(pgroups[year][party], function(i, pgroup) {
 					max = Math.max(max, Number(pgroup['Amount']));
 				});
 			});
@@ -92,11 +118,11 @@ $(function() {
 		$.each(years, function(i, year) {
 			party_circles[year] = {};
 			
-			$.each(sorted_index(results[year]), function(i, party) {
+			$.each(sorted_index(pgroups[year]), function(i, party) {
 				party_circles[year][party] = [];
 				var colour = colours[party];
 				
-				$.each(results[year][party], function(i, pgroup) {
+				$.each(pgroups[year][party], function(i, pgroup) {
 					var amount = Number(pgroup['Amount']);
 					var radius = (minSize + amount) * scale / oldZoom;
 					var circle = new google.maps.Circle({
@@ -134,27 +160,15 @@ $(function() {
 	});
 	
 	
+	// load data for this year, and select the same party if possible
 	$('#years').change(function() {
-		var year = $(this).val();
-		var parties = sorted_index(party_totals[year]);
+		$('#info, #partyList > div').hide();
+		clear_circles();
 		
-		// get total for each party and find the maximum
-		var max = 1;
-		$.each(parties, function(i, party) {
-			if (!party_totals[year].hasOwnProperty(party)) return true;
-			max = Math.max(max, Number(party_totals[year][party]));
-		});
-		
-		// create colour bars for each party
-		$.each(parties, function(i, party) {
-			if (!party_totals[year].hasOwnProperty(party)) return true;
-			$('#partyList #list-' + year).append(
-				$('<a>' + party + '</a>').append($('<div>').css({
-					width: '' + (party_totals[year][party] / max * 100) + '%',
-					backgroundColor: colours[party]
-				}))
-			);
-		});
+		var $yearlist = $('#partyList #list-' + $(this).val()).show();
+		var party = $('#partyList a.selected').text();
+		if (party)
+			$yearlist.find('a:contains("' + party + '")').click();
 	});
 	
 	
@@ -163,24 +177,30 @@ $(function() {
 		e.preventDefault();
 		
 		if ($(this).hasClass('selected')) return;
-		$('a').removeClass('selected');
+		$('#partyList a').removeClass('selected');
 		$(this).addClass('selected');
 		
 		var year = $('#years').val();
 		var party = $(this).text();
 		var colour = colours[party];
-		var party_total = '$' + format_currency(party_totals[year][party]);
 		
 		// show info dialog for this party
 		$('#info').show();
 		$('#info h2').text($(this).text()).css('border-color', colour);
-		$('#info #year').text(year);
-		$('#info #total').text(party_total).css('color', colour);
+		$('#info .year').text(year);
+		
+		$('#info p').each(function() {
+			var stat = $(this).attr('id');
+			var amount = ($(this).hasClass('money')
+					? format_currency(party_totals[year][party][stat])
+					: add_commas(party_totals[year][party][stat]));
+			$('.amount', $(this)).remove();
+			$('<div class="amount">').text(amount).appendTo($(this));
+		});
+		$('#info .amount').css('color', colour);
 		
 		// clear existing circles and enable this party's circles
-		$.each(circles, function(i, circle) {
-			circle.setMap(null);
-		});
+		clear_circles();
 		circles = party_circles[year][party];
 		$.each(circles, function(i, circle) {
 			circle.setMap(map);
