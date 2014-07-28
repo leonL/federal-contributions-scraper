@@ -14,7 +14,8 @@ select { border: 1px solid #000; border-radius: 5px; background: #fff;
 #partyList a { display: block; padding: 10px 0; border-bottom: 1px solid #eee; cursor: pointer; }
 #partyList a.selected { font-weight: bold; }
 #partyList a:hover { background: #eee; }
-#partyList a div { height: 20px; }
+#partyList a .bar { overflow: auto; }
+#partyList a .bar div { height: 20px; float: left; }
 
 #info { display: none; }
 #info .amount { font-weight: bold; font-size: 24px; }

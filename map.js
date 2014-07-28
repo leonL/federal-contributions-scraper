@@ -82,10 +82,20 @@ $(function() {
 			// create colour bars for each party
 			$.each(sorted_index(totals[year]), function(i, party) {
 				$('#partyList #list-' + year).append(
-					$('<a>' + party + '</a>').append($('<div>').css({
-						width: '' + (totals[year][party]['sum_total'] / max * 100) + '%',
-						backgroundColor: colours[party]
-					}))
+					$('<a>' + party + '</a>').append(
+						$('<div class="bar">').append(
+							$('<div>').css({
+								width: '' + (totals[year][party]['sum_federal'] / max * 100) + '%',
+								backgroundColor: colours[party]
+							})
+						).append(
+							$('<div>').css({
+								width: '' + (totals[year][party]['sum_riding'] / max * 100) + '%',
+								backgroundColor: colours[party],
+								opacity: 0.6
+							})
+						)
+					)
 				);
 			});
 		});
