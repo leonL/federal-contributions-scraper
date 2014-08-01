@@ -5,11 +5,12 @@ import os
 
 import requests
 
-import query
-import search
+from query import build_query
+from search import search_contribs
 
 
-def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_address=True):
+def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_address=True,
+                    federal=True, riding=True):
     session = requests.Session()
     contribs = []
 
@@ -17,13 +18,16 @@ def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_add
         csvpath = (os.path.join(contribs_dir, '{}.{}.csv'.format(party, year))
                    if contribs_dir is not None else None)
 
-        print 'Getting federal party contributions for {} in {}'.format(party, year)
-        queryid = query.build_query(session, party, True, year)
-        contribs.extend(search.search_contribs(session, queryid, True, year, get_address, csvpath))
+        # run each search if they are explicitly enabled, or both if neither are
+        if federal or not riding:
+            print 'Getting federal party contributions for {} in {}'.format(party, year)
+            queryid = build_query(session, party, True, year)
+            contribs.extend(search_contribs(session, queryid, True, year, get_address, csvpath))
 
-        print 'Getting local riding association contributions for {} in {}'.format(party, year)
-        queryid = query.build_query(session, party, False, year)
-        contribs.extend(search.search_contribs(session, queryid, False, year, get_address, csvpath))
+        if riding or not federal:
+            print 'Getting local riding association contributions for {} in {}'.format(party, year)
+            queryid = build_query(session, party, False, year)
+            contribs.extend(search_contribs(session, queryid, False, year, get_address, csvpath))
 
     return contribs
 

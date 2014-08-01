@@ -37,6 +37,10 @@ if __name__ == '__main__':
                         help="Specify a comma-separated list of party names (or parts thereof).")
     parser.add_argument('-y', '--year', '--years',
                         help="Specify a year or range of years, e.g. 2012 or 2011-2013")
+    parser.add_argument('-f', '--federal', action='store_true',
+                        help="Search federal party contributions only.")
+    parser.add_argument('-r', '--riding', action='store_true',
+                        help="Search riding association contributions only.")
     args = parser.parse_args()
 
     # override party list
@@ -54,7 +58,8 @@ if __name__ == '__main__':
     # scrape data from elections website
     if not args.analyze_only:
         for party in parties:
-            scraper.scrape_contribs(party, start_year, end_year, contribs_dir)
+            scraper.scrape_contribs(party, start_year, end_year, contribs_dir,
+                                    federal=args.federal, riding=args.riding)
 
     # analyze data and export for map
     mapper.analyze_contribs(contribs_dir, results_dir)
