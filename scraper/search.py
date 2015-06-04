@@ -1,9 +1,9 @@
 import csv
 import re
 import time
+import urlparse
 
 from bs4 import BeautifulSoup, SoupStrainer
-
 
 FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/DetailedReport'
 RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/DetailedReport'
@@ -143,10 +143,12 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             amount = int(float(cells[5].get_text().replace(',', '')) * 100)
 
             if get_address:
+                href = urlparse.parse_qs(urlparse.urlparse(cells[1].a['href']).query)
                 postal_params.update({'addrname': name,
                                       'addrclientid': params['selectedid'],
                                       'displayaddress': True,
                                       'page': params['page'],
+                                      'rowNbr': href['rowNbr'][0]
                                       })
 
                 tries = 0
