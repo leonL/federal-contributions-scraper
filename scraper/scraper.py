@@ -10,7 +10,7 @@ from search import search_contribs
 
 
 def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_address=True,
-                    federal=True, riding=True):
+                    federal=True, riding=True, q_reports=False):
     session = requests.Session()
     contribs = []
 
@@ -21,13 +21,13 @@ def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_add
         # run each search if they are explicitly enabled, or both if neither are
         if federal or not riding:
             print 'Getting federal party contributions for {} in {}'.format(party, year)
-            queryid = build_query(session, party, True, year)
-            contribs.extend(search_contribs(session, queryid, True, year, get_address, csvpath))
+            queryid = build_query(session, party, True, year, q_reports)
+            contribs.extend(search_contribs(session, queryid, True, year, get_address, csvpath, q_reports))
 
         if riding or not federal:
             print 'Getting local riding association contributions for {} in {}'.format(party, year)
-            queryid = build_query(session, party, False, year)
-            contribs.extend(search_contribs(session, queryid, False, year, get_address, csvpath))
+            queryid = build_query(session, party, False, year, q_reports)
+            contribs.extend(search_contribs(session, queryid, False, year, get_address, csvpath, q_reports))
 
     return contribs
 

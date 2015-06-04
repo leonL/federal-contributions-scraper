@@ -10,13 +10,14 @@ RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/DetailedReport'
 PAGE_SIZE = 200
 
 
-def search_contribs(session, queryid, federal=True, year=2012, get_address=True, csvpath=None):
+def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
+                        csvpath=None, q_reports=False):
     base_uri = FEDERAL_URI if federal else RIDING_URI
     params = {'act': 'C2',
               'returntype': 1,
               'option': 2,
               'part': '2A',
-              'period': 0,
+              'period': 1 if q_reports else 0,
               'fromperiod': year,
               'toperiod': year,
               'queryid': queryid,
@@ -38,7 +39,8 @@ def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
     options = select.find_all('option')
     for o, option in enumerate(options):
         params['selectedid'] = option['value']
-        subcat = option.get_text().split(' /', 1)[0]
+        subcat = option.get_text()
+        subcat = subcat.split(' /', 1)[0] if not(q_reports) else subcat
 
         print 'Search {} of {}:'.format(o + 1, len(options)), subcat
 

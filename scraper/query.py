@@ -7,12 +7,12 @@ FEDERAL_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/PP/SelectParties'
 RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/SelectAssociations'
 
 
-def build_query(session, party=None, federal=True, year=2012):
+def build_query(session, party=None, federal=True, year=2012, q_reports=False):
     base_uri = FEDERAL_URI if federal else RIDING_URI
     params = {
         'act': 'C2',
         'returntype': 1,
-        'period': 0,
+        'period': 1 if q_reports else 0,
         }
 
     # get search form

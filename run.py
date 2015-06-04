@@ -40,6 +40,8 @@ if __name__ == '__main__':
                         help="Search federal party contributions only.")
     parser.add_argument('-r', '--riding', action='store_true',
                         help="Search riding association contributions only.")
+    parser.add_argument('-q', '--q_reports', action='store_true',
+                        help="Search quarterly (rather than annual) reports")
     args = parser.parse_args()
 
     # override party list
@@ -58,4 +60,4 @@ if __name__ == '__main__':
     if not args.analyze_only:
         for party in parties:
             scraper.scrape_contribs(party, start_year, end_year, contribs_dir,
-                                    federal=args.federal, riding=args.riding)
+                                    federal=args.federal, riding=args.riding, q_reports=args.q_reports)
