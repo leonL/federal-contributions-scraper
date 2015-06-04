@@ -7,7 +7,6 @@ import os
 import re
 
 from scraper import scraper
-from mapper import mapper
 
 
 if __name__ == '__main__':
