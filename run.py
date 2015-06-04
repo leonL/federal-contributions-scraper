@@ -60,6 +60,3 @@ if __name__ == '__main__':
         for party in parties:
             scraper.scrape_contribs(party, start_year, end_year, contribs_dir,
                                     federal=args.federal, riding=args.riding)
-
-    # analyze data and export for map
-    mapper.analyze_contribs(contribs_dir, results_dir)
