@@ -130,9 +130,6 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             cells = row.find_all('td')
 
             num = cells[0].get_text().strip()
-            # skip empty id numbers
-            if not num:
-                continue
             # remove weird decimals from id numbers
             for ch in ',.':
                 if ch in num:
