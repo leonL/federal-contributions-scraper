@@ -128,7 +128,7 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             print 'Parsing{}{}...'.format(', fetching addresses' if get_address else '',
                                           ', saving to CSV' if csvwriter else '')
 
-        for row in rows:
+        for i, row in enumerate(rows):
             cells = row.find_all('td')
 
             num = cells[0].get_text().strip()
@@ -169,7 +169,7 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
                 city = province = postal = ''
 
             contrib = subcat, num, name, date, amount, city, province, postal
-            #print contrib
+            print i, contrib
 
             if csvwriter is not None:
                 csvwriter.writerow([field.encode('utf-8') if isinstance(field, unicode)
