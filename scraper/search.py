@@ -13,7 +13,7 @@ PAGE_SIZE = 200
 def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
                         csvpath=None, q_reports=False):
     base_uri = FEDERAL_URI if federal else RIDING_URI
-    params = {'act': 'C2',
+    params = {'act': 'C2' if year != 2015 else 'C23',
               'returntype': 1,
               'option': 2,
               'part': '2A',
