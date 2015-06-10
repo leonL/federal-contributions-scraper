@@ -17,7 +17,7 @@ if __name__ == '__main__':
                'Liberal Party',
                'New Democratic Party',
                ]
-    start_year = 2011
+    start_year = 2007
     end_year = 2013
     contribs_dir = './contribs'
     results_dir = './results'
@@ -42,6 +42,8 @@ if __name__ == '__main__':
                         help="Search riding association contributions only.")
     parser.add_argument('-q', '--q_reports', action='store_true',
                         help="Search quarterly (rather than annual) reports")
+    parser.add_argument('-s', '--summary', action='store_true',
+                        help="Search summary statistics")
     args = parser.parse_args()
 
     # override party list
@@ -60,4 +62,5 @@ if __name__ == '__main__':
     if not args.analyze_only:
         for party in parties:
             scraper.scrape_contribs(party, start_year, end_year, contribs_dir,
-                                    federal=args.federal, riding=args.riding, q_reports=args.q_reports)
+                                    federal=args.federal, riding=args.riding,
+                                    q_reports=args.q_reports, summary=args.summary)

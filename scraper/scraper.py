@@ -10,9 +10,13 @@ from search import search_contribs
 
 
 def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_address=True,
-                    federal=True, riding=True, q_reports=False):
+                    federal=True, riding=True, q_reports=False, summary=False):
     session = requests.Session()
     contribs = []
+    if summary:
+        contribs_dir += '/summaries'
+        if not os.path.exists(contribs_dir):
+            os.makedirs(contribs_dir)
 
     for year in range(start_year, end_year + 1):
         csvpath = (os.path.join(contribs_dir, '{}.{}.csv'.format(party, year))
@@ -22,12 +26,12 @@ def scrape_contribs(party, start_year, end_year=None, contribs_dir=None, get_add
         if federal or not riding:
             print 'Getting federal party contributions for {} in {}'.format(party, year)
             queryid = build_query(session, party, True, year, q_reports)
-            contribs.extend(search_contribs(session, queryid, True, year, get_address, csvpath, q_reports))
+            contribs.extend(search_contribs(session, queryid, True, year, get_address, csvpath, q_reports, summary))
 
         if riding or not federal:
             print 'Getting local riding association contributions for {} in {}'.format(party, year)
             queryid = build_query(session, party, False, year, q_reports)
-            contribs.extend(search_contribs(session, queryid, False, year, get_address, csvpath, q_reports))
+            contribs.extend(search_contribs(session, queryid, False, year, get_address, csvpath, q_reports, summary))
 
     return contribs
 

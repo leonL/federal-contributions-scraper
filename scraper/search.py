@@ -12,6 +12,7 @@ PAGE_SIZE = 200
 
 def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
                         csvpath=None, q_reports=False):
+                        csvpath=None, q_reports=False, summary=False):
     base_uri = FEDERAL_URI if federal else RIDING_URI
     params = {'act': 'C2' if year != 2015 else 'C23',
               'returntype': 1,
@@ -42,7 +43,8 @@ def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
         subcat = option.get_text()
         subcat = subcat.split(' /', 1)[0] if not(q_reports) else subcat
 
-        print 'Search {} of {}:'.format(o + 1, len(options)), subcat
+        if not summary:
+            print 'Search {} of {}:'.format(o + 1, len(options)), subcat
 
         # if a path is specified, look for existing records in a csv file
         try:
@@ -57,7 +59,10 @@ def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
             with open(csvpath, 'a+b', 1) as csvfile:
                 print 'Opening CSV file for writing.'
                 csvwriter = csv.writer(csvfile, lineterminator='\n')
-                contribs.extend(subcat_search(subcat, session, base_uri, params, get_address,
+                if summary:
+                    summary_search(subcat, session, base_uri, params, csvwriter, federal)
+                else:
+                    contribs.extend(subcat_search(subcat, session, base_uri, params, get_address,
                                               csvwriter, count))
         else:
             contribs.extend(subcat_search(subcat, session, base_uri, params, get_address))
@@ -70,6 +75,42 @@ def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
 
     return contribs
 
+def summary_search(subcat, session, base_uri, params, csvwriter, federal):
+
+    req = session.get(base_uri, params=params)
+    soup = BeautifulSoup(req.text)
+
+    # print 'Organization:', subcat
+
+    anonymousKey = "TotalAnonymousLess20" if federal else "TotalAnonymousLess25"
+
+    totalContributions = in_cents(extract_summary_val(soup, "TotalContributions"))
+    totalContributionsOver200 = in_cents(extract_summary_val(soup, "TotalGreater200"))
+    totalContributions200OrLess = in_cents(extract_summary_val(soup, "TotalLess200"))
+    totalContributions20OrLess = in_cents(extract_summary_val(soup, anonymousKey))
+
+    nContributors = extract_summary_val(soup, "TotalContributors")
+    nContributors200OrLess = extract_summary_val(soup, "TotalLess200Count")
+    nContributors20OrLess = extract_summary_val(soup, anonymousKey + "Count")
+
+    summaryRow = subcat, totalContributions, totalContributionsOver200, totalContributions200OrLess, totalContributions20OrLess, nContributors, nContributors200OrLess, nContributors20OrLess
+    print summaryRow
+
+    csvwriter.writerow([field.encode('utf-8') if isinstance(field, unicode)
+                        else field for field in summaryRow])
+
+def in_cents(n):
+    cents = int(float(n.replace(',', '')) * 100)
+    return cents
+
+def extract_summary_val(soup, id):
+    val = "0"
+    th = soup.find('th', id=id)
+    if th:
+        td = th.find_next_siblings('td').pop()
+        val = td.find("span").text
+        val = val if bool(val.strip()) else "0"
+    return val
 
 def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter=None, count=0):
     contribs = []
