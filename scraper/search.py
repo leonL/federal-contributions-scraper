@@ -11,10 +11,16 @@ PAGE_SIZE = 200
 
 
 def search_contribs(session, queryid, federal=True, year=2012, get_address=True,
-                        csvpath=None, q_reports=False):
                         csvpath=None, q_reports=False, summary=False):
+
+    act = "C2"
+    if year < 2007:
+        act = "C24"
+    elif year == 2015:
+        act = "C23"
+
     base_uri = FEDERAL_URI if federal else RIDING_URI
-    params = {'act': 'C2' if year != 2015 else 'C23',
+    params = {'act': act,
               'returntype': 1,
               'option': 2,
               'part': '2A',

@@ -9,8 +9,15 @@ RIDING_URI = 'http://www.elections.ca/WPAPPS/WPF/EN/EDA/SelectAssociations'
 
 def build_query(session, party=None, federal=True, year=2012, q_reports=False):
     base_uri = FEDERAL_URI if federal else RIDING_URI
+
+    act = "C2"
+    if year < 2007:
+        act = "C24"
+    elif year == 2015:
+        act = "C23"
+
     params = {
-        'act': 'C2' if year != 2015 else 'C23',
+        'act': act,
         'returntype': 1,
         'period': 1 if q_reports else 0,
         }
