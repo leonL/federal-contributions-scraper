@@ -188,7 +188,7 @@ def subcat_search(subcat, session, base_uri, params, get_address=True, csvwriter
             date = cells[2].get_text().strip()
             amount = int(float(cells[5].get_text().replace(',', '')) * 100)
 
-            if get_address:
+            if get_address & bool(cells[1].a):
                 href = urlparse.parse_qs(urlparse.urlparse(cells[1].a['href']).query)
                 postal_params.update({'addrname': name,
                                       'addrclientid': params['selectedid'],
