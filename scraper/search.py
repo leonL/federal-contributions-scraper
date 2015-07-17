@@ -95,9 +95,9 @@ def summary_search(subcat, session, base_uri, params, csvwriter, federal):
     totalContributions200OrLess = in_cents(extract_summary_val(soup, "TotalLess200"))
     totalContributions20OrLess = in_cents(extract_summary_val(soup, anonymousKey))
 
-    nContributors = extract_summary_val(soup, "TotalContributors")
-    nContributors200OrLess = extract_summary_val(soup, "TotalLess200Count")
-    nContributors20OrLess = extract_summary_val(soup, anonymousKey + "Count")
+    nContributors = str_to_int(extract_summary_val(soup, "TotalContributors"))
+    nContributors200OrLess = str_to_int(extract_summary_val(soup, "TotalLess200Count"))
+    nContributors20OrLess = str_to_int(extract_summary_val(soup, anonymousKey + "Count"))
 
     summaryRow = subcat, totalContributions, totalContributionsOver200, totalContributions200OrLess, totalContributions20OrLess, nContributors, nContributors200OrLess, nContributors20OrLess
     print summaryRow
@@ -108,6 +108,9 @@ def summary_search(subcat, session, base_uri, params, csvwriter, federal):
 def in_cents(n):
     cents = int(float(n.replace(',', '')) * 100)
     return cents
+
+def str_to_int(str):
+    return int(str.replace(',', ''))
 
 def extract_summary_val(soup, id):
     val = "0"
